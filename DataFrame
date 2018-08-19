@@ -1,1 +1,20 @@
+import pandas as pd
+import logging 
+from pandas import DataFrame
+df = pd.read_csv("/Users/nichog/desktop/Pystuff/cj_export_010617.csv")
+df = DataFrame(data = df)
+df
 
+#amount each product was ordered
+pd.value_counts(df['product 1'])
+
+#find amount of orders cancelled for each product
+df.groupby('product 1')['cancel_date'].count()
+
+#Data frame of product orders and number cancelled
+df_product = pd.DataFrame ({
+    'product':['MoonBox (January)','MoonBox + Wearable Gem (January)','Mini MoonBox (January)','Mini MoonBox (1702)', 'MoonBox (1702)','MoonBox + Wearable Gem (1702)','Crescent MoonBox'],
+    'total ordered':['637','564','388','46','31','24','11'],
+    'number cancelled':['184','378','184','2','1','0','10']
+})
+df_product
