@@ -1,0 +1,69 @@
+import requests
+import json
+import csv
+import pandas as pd
+import numpy as np
+np.set_printoptions(threshold=np.nan)
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+import time
+import math
+from collections import Counter
+
+#########################################################
+#Edit only these if necessary
+
+past_days_to_avg = 1
+
+#########################################################
+
+url = "https://api.cratejoy.com/v1/subscriptions/"
+key = "moonbox"
+secret_key = "<KEY HERE>"
+url2 = 'https://api.cratejoy.com/v1/products/'
+
+#calculate the start page based on today's date and the prev days to average
+start_count_date = str(pd.datetime.today() - timedelta(days=past_days_to_avg))[:10] + "T00:00:00Z"
+
+# SET IMPORTANT DATES
+today = pd.to_datetime(pd.datetime.today())
+
+
+# find how many days left until cut-off
+upcoming_month = today+timedelta(days=(21-today.day)) 
+upcoming_cut_off = upcoming_month.strftime("%Y-%m-%d")
+
+if today.day > 20:
+	days_to_cut_off = (20-today.day) + 30
+else:
+	days_to_cut_off = 20-today.day
+
+last_cutoff = (upcoming_month - timedelta(days=30)).strftime("%Y-%m-%d")
+
+##############################################
+#get all of the subscriptions
+subs_df = pd.DataFrame()
+print("getting past " + str(past_days_to_avg) + " days activity...")
+for i in range(2):
+	payload2 = {'page':i,
+	# 'status':'active',
+	'start_date__gt': start_count_date,
+	'with': 'logs,customer,billing'
+	}
+	#get the order information, using key as user name and secret_key as password
+	resp = requests.get(url, auth=(key,secret_key), params=payload2)
+
+	#convert response to json, which makes data a dict object
+	data = resp.json()
+	print("reading page "+str(i)+"...")
+	if not data['results']:
+		break
+	elif subs_df.empty:
+		subs_df = pd.DataFrame(data['results'])
+	else:
+		subs_df = subs_df.append(data['results'], ignore_index=True)
+
+subs_df = subs_df.drop_duplicates(subset=['start_date', 'url'], keep='last')
+subs_df = subs_df.reset_index(drop=True)
+
+print(subs_df)
